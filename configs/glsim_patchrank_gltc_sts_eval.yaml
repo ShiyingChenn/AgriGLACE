@@ -1,0 +1,23 @@
+data_root: ./datasets/plantwild
+prompt_json: ./prompts/plantwild_single_prompt.json
+model_name: ViT-B/16
+batch_size: 8
+num_workers: 4
+
+rank_hidden_dim: 256
+rank_dropout: 0.1
+local_hidden_dim: 512
+local_dropout: 0.1
+local_top_r: 16
+local_pool_tau: 0.5
+glsim_weight: 0.3
+rank_weight: 0.7
+max_local_weight: 0.10
+local_init_weight: 0.05
+
+expected_num_prompts: 1
+align_eta: 0.05
+seen_temperature: 1.05
+
+resume_ckpt: ./outputs/results/glsim_patchrank_gltc_eta005/best_h_glsim_patchrank_gltc.pt
+output_dir: ./outputs/results/glsim_patchrank_gltc_sts_t105
