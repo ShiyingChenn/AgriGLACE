@@ -1,15 +1,17 @@
-# PlantWild Single-Prompt GZSL
+# AgriGLACE: Global-Local Enhancement and Disagreement Calibration for CLIP-Based Generalized Zero-Shot Plant Disease Recognition
 
-This project focuses on **Generalized Zero-Shot Learning (GZSL) for plant disease recognition** based on CLIP under a single-prompt setting. To address the insufficient representation of local lesion regions and the seen-class bias in plant disease images, the framework is built around the following three core modules:
+This repository corresponds to the paper **“Global-Local Enhancement and Disagreement Calibration for CLIP-Based Generalized Zero-Shot Plant Disease Recognition”**.
+
+This project focuses on **Generalized Zero-Shot Learning (GZSL) for plant disease recognition** based on CLIP under a single-prompt setting. To address insufficient lesion-aware local modeling, unreliable multi-branch vision-language matching under global-local disagreement, and seen-class bias in plant disease images, the framework is built around the following three core modules:
 
 - **Module 1: Global-guided Local Enhancement (GLE) Module**
-- **Module 2: Global-Local/Text Alignment Calibration (GLTC)**
+- **Module 2: Global-Local Disagreement Calibration (GLDC)**
 - **Module 3: Seen Temperature Scaling (STS)**
 
 In particular:
 
-- **GLE** enhances lesion-related local visual representations and fuses them with global image features;
-- **GLTC** calibrates classification logits based on the alignment relationships among global features, local features, and text features;
+- **GLE** enhances lesion-related local visual representations and injects local lesion cues into the global representation;
+- **GLDC** calibrates fused logits using disagreement between global and local branches to improve the reliability of multi-branch vision-language matching;
 - **STS** is applied only during evaluation to scale the logits of seen classes, thereby alleviating the common seen-class bias in GZSL.
 
 ---
@@ -44,8 +46,10 @@ The components are summarized as follows:
 * `src/model_utils.py`: Core implementation of the GLE-related modules.
 * `src/prompt_utils.py`: Prompt processing and text-feature-related utilities.
 * `src/utils.py`: General utility functions.
-* `train_glsim_patchrank_gltc.py`: Training script for GLE + GLTC.
+* `train_glsim_patchrank_gltc.py`: Training script for GLE + GLDC.
 * `eval_glsim_patchrank_gltc_sts.py`: Evaluation script that loads a trained checkpoint and applies STS during inference.
+
+> **Note:** Some script and config filenames in this repository retain the historical `gltc` naming for compatibility with the current codebase, but in the paper this module is referred to as **GLDC (Global-Local Disagreement Calibration)**.
 
 ---
 
@@ -132,26 +136,28 @@ The `configs/` directory contains two configuration files for the main experimen
 
 These files record the final parameter settings used in the main experiments for reproducibility and management. Even if the scripts are run mainly through command-line arguments, the YAML files still serve as the reference configurations.
 
+> **Note:** The filenames keep the original `gltc` naming in the current repository, while the corresponding paper terminology is **GLDC**.
+
 ---
 
 ## 7. Method Overview
 
 ### Module 1: Global-guided Local Enhancement (GLE) Module
 
-The **Global-guided Local Enhancement (GLE) Module** is used to enhance local lesion-related representations on the image side and fuse them with global semantic features. Its main idea is:
+The **Global-guided Local Enhancement (GLE) Module** is used to enhance local lesion-related representations on the image side and inject local lesion cues into the global representation. Its main idea is:
 
 1. extract global features and patch-level tokens from the modified CLIP image encoder;
 2. use a global-guided local scoring mechanism to identify potentially informative lesion regions;
 3. aggregate the selected local patch features;
-4. fuse the enhanced local representation with the global representation.
+4. inject the enhanced local cues into the global representation.
 
 ---
 
-### Module 2: Global-Local/Text Alignment Calibration (GLTC)
+### Module 2: Global-Local Disagreement Calibration (GLDC)
 
-**Global-Local/Text Alignment Calibration (GLTC)** calibrates classification logits based on the alignment relationships among global features, local features, and class text features.
+**Global-Local Disagreement Calibration (GLDC)** calibrates fused logits using disagreement between the global and local branches.
 
-By leveraging the response discrepancy between the global branch and the local branch in the text feature space, GLTC adjusts the fused logits to reduce representation bias and improve classification discrimination.
+By leveraging the response discrepancy between the global branch and the local branch, GLDC adjusts the fused logits to reduce branch inconsistency and improve classification reliability.
 
 ---
 
@@ -174,7 +180,7 @@ train_glsim_patchrank_gltc.py
 This script is used to train:
 
 * **GLE**
-* **GLTC**
+* **GLDC**
 
 An example training command is:
 
@@ -224,7 +230,7 @@ eval_glsim_patchrank_gltc_sts.py
 This script is used to:
 
 1. load a trained checkpoint;
-2. perform inference with GLE + GLTC;
+2. perform inference with GLE + GLDC;
 3. apply **STS** during evaluation to obtain the final GZSL results.
 
 An example evaluation command is:
@@ -257,7 +263,7 @@ Notes:
 
 * `seen_temperature` is used only during evaluation;
 * the evaluation script requires a trained checkpoint in advance;
-* `resume_gltc_ckpt` should point to the checkpoint saved during training.
+* `resume_ckpt` should point to the checkpoint saved during training.
 
 ---
 
@@ -271,7 +277,7 @@ Some important arguments are listed below:
 * `rank_weight`: weight of the patch-ranking branch in GLE
 * `max_local_weight`: maximum fusion weight for local features
 * `local_init_weight`: initial fusion weight for local features
-* `align_eta`: calibration coefficient in GLTC for global/local-text alignment discrepancy
+* `align_eta`: calibration coefficient for disagreement-based logit calibration
 * `seen_temperature`: temperature parameter used in STS for seen-class logit scaling
 
 ---
@@ -298,4 +304,3 @@ Only `model.py` is modified as required by the proposed method to support patch-
 
 If you use this project, please also follow the license requirements of the original CLIP project and acknowledge the original source where appropriate.
 
----
